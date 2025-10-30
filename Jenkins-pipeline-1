@@ -5,7 +5,7 @@ pipeline {
         // Repository & Build Details
         GIT_REPO = 'https://github.com/BhanuKrishna7/myweb.git'
         BRANCH = 'master'
-        WAR_NAME = 'myweb.war'
+        WAR_NAME = 'myweb-8.2.0.war'
 
         // Remote Server Details
         TOMCAT_HOST = '172.31.16.111'
