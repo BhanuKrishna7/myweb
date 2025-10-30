@@ -1,0 +1,87 @@
+pipeline {
+    agent any
+
+    environment {
+        // Repository & Build Details
+        GIT_REPO = 'https://github.com/BhanuKrishna7/myweb.git'
+        BRANCH = 'master'
+        WAR_NAME = 'myweb.war'
+
+        // Remote Server Details
+        TOMCAT_HOST = '172.31.16.111'
+        TOMCAT_USER = 'ec2-user'   // or ubuntu, centos, etc.
+        TOMCAT_PATH = '/home/ec2-user/apache-tomcat-9.0.111/webapps'
+        SSH_CRED_ID = 'SSH'  // Jenkins credential ID (SSH key)
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                echo '🔹 Cloning Git repository...'
+                git branch: "${BRANCH}", url: "${GIT_REPO}"
+            }
+        }
+
+        stage('Build with Maven') {
+            steps {
+                echo '🔹 Running Maven Clean and Package...'
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Stop Tomcat Service') {
+            steps {
+                echo '🛑 Stopping Tomcat service before deployment...'
+                sshagent (credentials: ["${SSH_CRED_ID}"]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${TOMCAT_USER}@${TOMCAT_HOST} '
+                            echo "Stopping Tomcat...";
+                            sudo systemctl stop tomcat || true;
+                            sleep 5;
+                            sudo systemctl status tomcat --no-pager || true;
+                        '
+                    """
+                }
+            }
+        }
+
+        stage('Copy WAR to Remote Server') {
+            steps {
+                echo '📦 Copying WAR file to Tomcat webapps directory...'
+                sshagent (credentials: ["${SSH_CRED_ID}"]) {
+                    sh """
+                        scp -o StrictHostKeyChecking=no target/${WAR_NAME} \
+                        ${TOMCAT_USER}@${TOMCAT_HOST}:${TOMCAT_PATH}/
+                    """
+                }
+            }
+        }
+
+        stage('Start Tomcat Service') {
+            steps {
+                echo '🚀 Starting Tomcat service after deployment...'
+                sshagent (credentials: ["${SSH_CRED_ID}"]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${TOMCAT_USER}@${TOMCAT_HOST} '
+                            echo "Starting Tomcat...";
+                            sudo systemctl daemon-reload;
+                            sudo systemctl start tomcat;
+                            sudo systemctl enable tomcat;
+                            sleep 5;
+                            sudo systemctl status tomcat --no-pager;
+                        '
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Deployment completed successfully!'
+        }
+        failure {
+            echo '❌ Deployment failed. Check the Jenkins logs for details.'
+        }
+    }
+}
