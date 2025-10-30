@@ -36,7 +36,6 @@ pipeline {
                     sh """
                        echo "Stopping Tomcat...";
                        ssh ${TOMCAT_USER}@${TOMCAT_HOST} /home/ec2-user/apache-tomcat-9.0.111/bin/shutdown.sh
-                        '
                     """
                 }
             }
