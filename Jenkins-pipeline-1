@@ -63,12 +63,10 @@ pipeline {
                 sshagent (credentials: ["${SSH_CRED_ID}"]) {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${TOMCAT_USER}@${TOMCAT_HOST} '
+                            echo "Stopping Tomcat...";
+                            ssh ${TOMCAT_USER}@${TOMCAT_HOST} /home/ec2-user/apache-tomcat-9.0.111/bin/shutdown.sh
                             echo "Starting Tomcat...";
-                            sudo systemctl daemon-reload;
-                            sudo systemctl start tomcat;
-                            sudo systemctl enable tomcat;
-                            sleep 5;
-                            sudo systemctl status tomcat --no-pager;
+                            ssh ${TOMCAT_USER}@${TOMCAT_HOST} /home/ec2-user/apache-tomcat-9.0.111/bin/startup.sh
                         '
                     """
                 }
