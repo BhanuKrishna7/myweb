@@ -34,11 +34,8 @@ pipeline {
                 echo '🛑 Stopping Tomcat service before deployment...'
                 sshagent (credentials: ["${SSH_CRED_ID}"]) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${TOMCAT_USER}@${TOMCAT_HOST} '
-                            echo "Stopping Tomcat...";
-                            sudo systemctl stop tomcat || true;
-                            sleep 5;
-                            sudo systemctl status tomcat --no-pager || true;
+                       echo "Stopping Tomcat...";
+                       ssh ${TOMCAT_USER}@${TOMCAT_HOST} /home/ec2-user/apache-tomcat-9.0.111/bin/shutdown.sh
                         '
                     """
                 }
@@ -62,8 +59,6 @@ pipeline {
                 echo '🚀 Starting Tomcat service after deployment...'
                 sshagent (credentials: ["${SSH_CRED_ID}"]) {
                     sh """
-                        echo "Stopping Tomcat...";
-                        ssh ${TOMCAT_USER}@${TOMCAT_HOST} /home/ec2-user/apache-tomcat-9.0.111/bin/shutdown.sh
                         echo "Starting Tomcat...";
                         ssh ${TOMCAT_USER}@${TOMCAT_HOST} /home/ec2-user/apache-tomcat-9.0.111/bin/startup.sh
                     """
