@@ -35,7 +35,7 @@ pipeline {
                 sshagent (credentials: ["${SSH_CRED_ID}"]) {
                     sh """
                        echo "Stopping Tomcat...";
-                       ssh ${TOMCAT_USER}@${TOMCAT_HOST} /home/ec2-user/apache-tomcat-9.0.111/bin/shutdown.sh
+                       ssh ${TOMCAT_USER}@${TOMCAT_HOST} /home/ec2-user/apache-tomcat-9.0.112/bin/shutdown.sh
                     """
                 }
             }
@@ -59,7 +59,7 @@ pipeline {
                 sshagent (credentials: ["${SSH_CRED_ID}"]) {
                     sh """
                         echo "Starting Tomcat...";
-                        ssh ${TOMCAT_USER}@${TOMCAT_HOST} /home/ec2-user/apache-tomcat-9.0.111/bin/startup.sh
+                        ssh ${TOMCAT_USER}@${TOMCAT_HOST} /home/ec2-user/apache-tomcat-9.0.112/bin/startup.sh
                     """
                 }
             }
