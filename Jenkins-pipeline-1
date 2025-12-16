@@ -8,9 +8,9 @@ pipeline {
         WAR_NAME = 'myweb-8.2.0.war'
 
         // Remote Server Details
-        TOMCAT_HOST = '172.31.16.111'
+        TOMCAT_HOST = '172.31.13.136'
         TOMCAT_USER = 'ec2-user'   // or ubuntu, centos, etc.
-        TOMCAT_PATH = '/home/ec2-user/apache-tomcat-9.0.111/webapps'
+        TOMCAT_PATH = '/home/ec2-user/apache-tomcat-9.0.112/webapps'
         SSH_CRED_ID = 'SSH'  // Jenkins credential ID (SSH key)
     }
 
