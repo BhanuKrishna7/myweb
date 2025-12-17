@@ -13,7 +13,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <docker.image.prefix>kammana</docker.image.prefix>
-        <sonar.host.url>http://18.119.104.22:9000/</sonar.host.url>
+        <sonar.host.url>http://3.149.5.161:9000/</sonar.host.url>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.2</junit.version>
     </properties>
