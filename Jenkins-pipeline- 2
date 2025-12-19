@@ -21,7 +21,7 @@ pipeline {
         PACKAGING   = 'war'
 
         // Remote Server Details
-        TOMCAT_HOST = '172.31.13.136'
+        TOMCAT_HOST = '172.31.10.32'
         TOMCAT_USER = 'ec2-user'
         TOMCAT_PATH = '/home/ec2-user/tomcat/webapps'
         SSH_CRED_ID = 'SSH'
