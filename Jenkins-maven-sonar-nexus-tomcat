@@ -1,74 +1,51 @@
 pipeline {
     agent any
 
-    environment {
-        APP_NAME      = "myweb"
-        VERSION       = "8.2.0"
-        WAR_FILE      = "target/myweb-8.2.0.war"
-        TOMCAT_HOST   = "172.31.10.32"
-        TOMCAT_HOME   = "/home/ec2-user/tomcat"
-        NEXUS_URL     = "3.129.21.111:8081"
-    }
-
     stages {
-
-        stage('Checkout Source Code') {
+        stage('Git Checkout') {
             steps {
-                git credentialsId: 'Github_Credentials',
-                    url: 'https://github.com/BhanuKrishna7/myweb.git'
+                git credentialsId: 'Github_Credentials', url: 'https://github.com/BhanuKrishna7/myweb.git'
             }
         }
-
-        stage('SonarQube Analysis') {
+        stage('Maven Build') {
             steps {
-                withSonarQubeEnv('SonarQube') {
+               withSonarQubeEnv('SonarQube') {
                     sh 'mvn clean verify sonar:sonar'
                 }
             }
         }
-
-        stage('Upload WAR to Nexus') {
+        stage('Upload war to nexus') {
             steps {
-                nexusArtifactUploader(
-                    nexusVersion: 'nexus3',
-                    protocol: 'http',
-                    nexusUrl: "${NEXUS_URL}",
-                    repository: 'sample-releases',
-                    credentialsId: 'nexus-creds',
-                    groupId: 'in.javahome',
-                    artifactId: "${APP_NAME}",
-                    version: "${VERSION}",
-                    artifacts: [[
-                        file: "${WAR_FILE}",
-                        type: 'war',
-                        classifier: ''
-                    ]]
-                )
-            }
-        }
-
+                nexusArtifactUploader artifacts: [
+                    [
+                        artifactId: 'myweb', 
+                        classifier: '', 
+                        file: 'target/myweb-8.2.0.war', 
+                        type: 'war'
+                    ]
+                ], 
+                credentialsId: 'nexus-creds', 
+                groupId: 'in.javahome', 
+                nexusUrl: '3.129.21.111:8081', 
+                nexusVersion: 'nexus3', 
+                protocol: 'http', 
+                repository: 'sample-releases', 
+                version: '8.2.0'
+                    }
+                }
         stage('Deploy to Tomcat') {
             steps {
                 sshagent(['Tomcat_Credentials']) {
                     sh """
-                        scp -o StrictHostKeyChecking=no ${WAR_FILE} \
-                        ec2-user@${TOMCAT_HOST}:${TOMCAT_HOME}/webapps/
-
-                        ssh ec2-user@${TOMCAT_HOST} "sudo ${TOMCAT_HOME}/bin/shutdown.sh || true"
-
-                        ssh ec2-user@${TOMCAT_HOST} "sudo ${TOMCAT_HOME}/bin/startup.sh"
-                    """
+                    scp -o StrictHostKeyChecking=no target/myweb-8.2.0.war  ec2-user@172.31.10.32:/home/ec2-user/tomcat/webapps/
+                    
+                    ssh ec2-user@172.31.10.32 "sudo /home/ec2-user/tomcat/bin/shutdown.sh"
+                    
+                    ssh ec2-user@172.31.10.32 "sudo /home/ec2-user/tomcat/bin/startup.sh"
+                
+                """
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo "✅ Deployment completed successfully"
-        }
-        failure {
-            echo "❌ Pipeline failed. Please check logs"
         }
     }
 }
