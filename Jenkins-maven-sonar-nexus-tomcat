@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME      = "myweb"
+        VERSION       = "8.2.0"
+        WAR_FILE      = "target/myweb-8.2.0.war"
+        TOMCAT_HOST   = "172.31.10.32"
+        TOMCAT_HOME   = "/home/ec2-user/tomcat"
+        NEXUS_URL     = "3.129.21.111:8081"
+    }
+
+    stages {
+
+        stage('Checkout Source Code') {
+            steps {
+                git credentialsId: 'Github_Credentials',
+                    url: 'https://github.com/BhanuKrishna7/myweb.git'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh 'mvn clean verify sonar:sonar'
+                }
+            }
+        }
+
+        stage('Upload WAR to Nexus') {
+            steps {
+                nexusArtifactUploader(
+                    nexusVersion: 'nexus3',
+                    protocol: 'http',
+                    nexusUrl: "${NEXUS_URL}",
+                    repository: 'sample-releases',
+                    credentialsId: 'nexus-creds',
+                    groupId: 'in.javahome',
+                    artifactId: "${APP_NAME}",
+                    version: "${VERSION}",
+                    artifacts: [[
+                        file: "${WAR_FILE}",
+                        type: 'war',
+                        classifier: ''
+                    ]]
+                )
+            }
+        }
+
+        stage('Deploy to Tomcat') {
+            steps {
+                sshagent(['Tomcat_Credentials']) {
+                    sh """
+                        scp -o StrictHostKeyChecking=no ${WAR_FILE} \
+                        ec2-user@${TOMCAT_HOST}:${TOMCAT_HOME}/webapps/
+
+                        ssh ec2-user@${TOMCAT_HOST} "sudo ${TOMCAT_HOME}/bin/shutdown.sh || true"
+
+                        ssh ec2-user@${TOMCAT_HOST} "sudo ${TOMCAT_HOME}/bin/startup.sh"
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Deployment completed successfully"
+        }
+        failure {
+            echo "❌ Pipeline failed. Please check logs"
+        }
+    }
+}
